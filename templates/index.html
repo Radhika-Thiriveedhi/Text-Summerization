@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Summarization Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Summarization Dashboard</h1>
+      <textarea id="inputText" placeholder="Paste a paragraph here..."></textarea>
+      <div class="controls">
+        <label>Max length: <input id="maxLen" type="number" value="120" min="10"/></label>
+        <label>Min length: <input id="minLen" type="number" value="30" min="5"/></label>
+        <button id="summarizeBtn">Summarize</button>
+      </div>
+      <h2>Summary</h2>
+      <div id="result" class="result">Your summary will appear here.</div>
+    </div>
+
+    <script>
+      const btn = document.getElementById('summarizeBtn');
+      btn.addEventListener('click', async () => {
+        const text = document.getElementById('inputText').value;
+        const maxLen = parseInt(document.getElementById('maxLen').value || '120', 10);
+        const minLen = parseInt(document.getElementById('minLen').value || '30', 10);
+        const resultEl = document.getElementById('result');
+
+        if (!text.trim()) {
+          resultEl.textContent = 'Please enter a paragraph to summarize.';
+          return;
+        }
+        if (minLen < 1 || maxLen < 1 || minLen > maxLen) {
+          resultEl.textContent = 'Please ensure min length is positive and less than or equal to max length.';
+          return;
+        }
+
+        resultEl.textContent = 'Summarizing...';
+        try {
+          const res = await fetch('/summarize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, max_length: maxLen, min_length: minLen })
+          });
+          const data = await res.json();
+          if (res.ok) resultEl.textContent = data.summary;
+          else resultEl.textContent = data.error || 'An error occurred';
+        } catch (err) {
+          resultEl.textContent = 'Request failed: ' + err.message;
+        }
+      });
+    </script>
+  </body>
+</html>
